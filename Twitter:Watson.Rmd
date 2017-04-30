@@ -1,0 +1,266 @@
+---
+title: "Untitled"
+author: "Jason Katz"
+date: "3/23/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(RCurl)
+library(httr)
+
+library(wordcloud)
+library(tidytext)
+library(ggplot2)
+library(devtools)
+library(twitteR)
+library(RJSONIO)
+library(stringr)
+library(tm)
+library(plyr)
+library(ROAuth)  # if you get this error - need this lib Error: object 'OAuthFactory' not found
+library(RCurl)
+
+## WATSON
+library(RCurl) # General Network Client Interface for R
+library(rjson) # JSON for R
+library(jsonlite) # JSON parser
+library(XML) # XML parser
+library(httr) # Tools for URLs and HTTP
+library(stringr)
+library(data.table) # data shaping
+library(reshape2) # data shaping
+library(tidyr) # data cleaning
+library(dplyr) # data cleaning
+library(png) # for the presenting of images
+
+GET(url=paste("http://gateway-a.watsonplatform.net/calls/info/GetAPIKeyInfo?apikey=90288dbb1b2aca9a202edd5da90bb3c04f4a5342&outputMode=json"))
+GET(url=paste("http://gateway-a.watsonplatform.net/calls/info/GetAPIKeyInfo?apikey=23029bf7eada21a1e881e63b6bdaab3c64c9daef&outputMode=json"))
+GET(url=paste("http://gateway-a.watsonplatform.net/calls/info/GetAPIKeyInfo?apikey=aa8cf439512068a4eb0c10d55d41ae06c2b0aea4&outputMode=json"))
+GET(url=paste("http://gateway-a.watsonplatform.net/calls/info/GetAPIKeyInfo?apikey=5d08a06f2efd4c879c6d225e7b4beda83bccc263&outputMode=json"))
+GET(url=paste("http://gateway-a.watsonplatform.net/calls/info/GetAPIKeyInfo?apikey=b041f41c7098b9b909caf5dfb426e7235c664471&outputMode=json"))
+GET(url=paste("http://gateway-a.watsonplatform.net/calls/info/GetAPIKeyInfo?apikey=36ff487ec2cd11f2eca94108e3cad26f0e4bbdbc&outputMode=json"))
+GET(url=paste("http://gateway-a.watsonplatform.net/calls/info/GetAPIKeyInfo?apikey=a6192816dd597f43940467481ec8b9c26f91f238&outputMode=json"))
+key1 = "90288dbb1b2aca9a202edd5da90bb3c04f4a5342"
+key2 = '23029bf7eada21a1e881e63b6bdaab3c64c9daef'
+key3 = 'aa8cf439512068a4eb0c10d55d41ae06c2b0aea4'
+key4 = "5d08a06f2efd4c879c6d225e7b4beda83bccc263"
+key5 = "b041f41c7098b9b909caf5dfb426e7235c664471"
+key6 = "36ff487ec2cd11f2eca94108e3cad26f0e4bbdbc"
+key7 = "a6192816dd597f43940467481ec8b9c26f91f238"
+alchemy_url = "http://gateway-a.watsonplatform.net/calls/text/"
+api_feature = "TextGetCombinedData"
+api_key = "90288dbb1b2aca9a202edd5da90bb3c04f4a5342"
+output_mode = "json"
+TEXT = "I am very upset with the state of this country, I want to cry"
+TEXT = URLencode(TEXT)
+query = paste(alchemy_url,api_feature,"?extract=doc-sentiment,doc-emotion&apikey=",key1,"&text=",TEXT,"&outputMode=",output_mode, sep="")
+query
+response = POST(query)
+response
+sentiment = httr::content(response)
+type = sentiment$docSentiment$type
+score = sentiment$docSentiment$score
+
+
+alchemy_url = "http://gateway-a.watsonplatform.net/calls/text/"
+api_feature = "TextGetCombinedData"
+output_mode = "json"
+TEXT = "I%20am%20very%20upset%20with%20the%20state%20of%20the%20country,%20I%20want%20to%20cry"
+api_key = key1
+keys = c(key1, key2, key3, key4, key5, key6, key7, 'END')
+for (i in keys){
+api_key = i
+query = paste(alchemy_url,api_feature,"?extract=doc-sentiment,doc-emotion&apikey=",api_key,"&text=",TEXT,"&outputMode=",output_mode, sep="")
+response = POST(query)
+if (response$headers$`x-alchemyapi-status` != 'ERROR') break
+if (api_key == tail(keys,1)) { stop("Alchemy Daily Transaction Limit Reached")}
+}
+
+
+
+
+
+
+setup_twitter_oauth('hLICNBRakuFE1ifoePIix0Ser', 'r4ggFazBdjxiMYAORCYh9riTNi9hBBEsDj069NlX8YrmSHiTm8', access_token='844891915925540869-BvifTPLzkbLmXUlGtlV8LuYJgjSg6Ly', access_secret='X8ZuQBlIrwfirDsD7y3CcTnBpvUk9E7ZKXWq4iZJngt7C')
+
+
+
+
+
+
+tweet_text <- function(word='Any Word') {
+#Takes any word and find last 10 tweets containing input word and uses output from IBM Watson Alchemy tool to find the average Sentiment (positive vs negative), anger, disgust, fear, joy, and sadness of the all the tweets containing the input. Scores are on a scale of 0 to 1.
+library(RCurl)
+library(httr)
+library(wordcloud)
+library(tidytext)
+library(ggplot2)
+library(devtools)
+library(twitteR)
+library(RJSONIO)
+library(stringr)
+library(tm)
+library(plyr)
+library(ROAuth)
+library(RCurl)
+## WATSON
+library(RCurl) # General Network Client Interface for R
+library(rjson) # JSON for R
+library(jsonlite) # JSON parser
+library(XML) # XML parser
+library(httr) # Tools for URLs and HTTP
+library(stringr)
+library(data.table) # data shaping
+library(reshape2) # data shaping
+library(tidyr) # data cleaning
+library(dplyr) # data cleaning
+library(png) # for the presenting of images
+key1 = "90288dbb1b2aca9a202edd5da90bb3c04f4a5342"
+key2 = '23029bf7eada21a1e881e63b6bdaab3c64c9daef'
+key3 = 'aa8cf439512068a4eb0c10d55d41ae06c2b0aea4'
+key4 = "5d08a06f2efd4c879c6d225e7b4beda83bccc263"
+key5 = "b041f41c7098b9b909caf5dfb426e7235c664471"
+key6 = "36ff487ec2cd11f2eca94108e3cad26f0e4bbdbc"
+key7 = "a6192816dd597f43940467481ec8b9c26f91f238"
+keys = c(key1, key2, key3, key4, key5, key6, key7, 'END')
+alchemy_url = "http://gateway-a.watsonplatform.net/calls/text/"
+api_feature = "TextGetCombinedData"
+output_mode = "json"
+for (i in keys){
+api_key = i
+TEXT = URLencode('Hi, my name is Jason')
+query = paste(alchemy_url,api_feature,"?extract=doc-sentiment,doc-emotion&apikey=",api_key,"&text=",TEXT,"&outputMode=",output_mode, sep="")
+response = POST(query)
+if (response$headers$`x-alchemyapi-status` != 'ERROR') break
+if (api_key == tail(keys,1)) { stop("Alchemy Daily Transaction Limit Reached")}
+}
+capture.output(setup_twitter_oauth('hLICNBRakuFE1ifoePIix0Ser', 'r4ggFazBdjxiMYAORCYh9riTNi9hBBEsDj069NlX8YrmSHiTm8', access_token='844891915925540869-BvifTPLzkbLmXUlGtlV8LuYJgjSg6Ly', access_secret='X8ZuQBlIrwfirDsD7y3CcTnBpvUk9E7ZKXWq4iZJngt7C'), file='NUL')
+tweet <- searchTwitter(paste('#', as.character(word), sep = ''), 10, lang="en")
+tweet <- strip_retweets(tweet, strip_manual=TRUE, strip_mt=TRUE) #remove retwe ets
+tweet <- twListToDF(tweet) #convert to data frame
+tweet <- tweet %>% select(text) #selects only text
+for (i in 1:length(tweet$text)){
+tweet[i,1] <- gsub('[[:cntrl:]]', '', tweet[i,1]) #remove control characters 
+tweet[i,1] <- gsub('\\d+', '', tweet[i,1]) #remove digits
+tweet[i,1] <- iconv(tweet[i,1], 'UTF-8', 'ASCII', sub="") #remove emojis 
+tweet[i,1] <- gsub("http[^[:space:]]*", "", tweet[i,1]) #remove URLs
+tweet[i,1] <- gsub("amp", "", tweet[i,1])
+tweet[i,1] <- gsub("@", "", tweet[i,1])
+tweet[i,1] <- gsub("#", "", tweet[i,1])
+tweet[i,1] <- gsub("$", "", tweet[i,1])
+tweet[i,1] <- gsub("-", "", tweet[i,1])
+tweet[i,1] <- gsub("/", "", tweet[i,1])
+tweet[i,1] <- gsub("=", "", tweet[i,1])
+tweet[i,1] <- gsub(":", "", tweet[i,1])
+}
+sentiment_all = c()
+anger_all=c()
+disgust_all=c()
+fear_all=c()
+joy_all=c()
+sadness_all=c()
+for (i in 1:length(tweet[,1])){
+TEXT = URLencode(tweet[i,1])
+query = paste(alchemy_url,api_feature,"?extract=doc-sentiment,doc-emotion&apikey=",api_key,"&text=",TEXT,"&outputMode=",output_mode, sep="")
+response = POST(query)
+sentiment = httr::content(response)
+if(sentiment$language != 'english') {next}
+if (response$headers$`x-alchemyapi-status` == 'ERROR') { 
+  if (response$headers$`x-alchemyapi-error-msg` == 'unsupported-text-language') {next}}
+if (response$headers$`x-alchemyapi-status` == 'ERROR') {stop("Switching Accounts, Try Again")}
+type = sentiment$docSentiment$type
+if (type == 'neutral') {
+  sentiment1 = 0
+}   else   {
+      sentiment1 = as.numeric(sentiment$docSentiment$score)  
+}
+anger1 = as.numeric(sentiment$docEmotions$anger)
+disgust1 = as.numeric(sentiment$docEmotions$disgust)
+fear1 = as.numeric(sentiment$docEmotions$fear)
+joy1 = as.numeric(sentiment$docEmotions$joy)
+sadness1 = as.numeric(sentiment$docEmotions$sadness)
+sentiment_all[i] = sentiment1
+anger_all[i] = anger1
+disgust_all[i] = disgust1
+fear_all[i] = fear1
+joy_all[i] = joy1
+sadness_all[i] = sadness1
+}
+sentiment = mean(sentiment_all, na.rm=TRUE)/2+.5
+anger = mean(anger_all, na.rm=TRUE)
+disgust = mean(disgust_all, na.rm=TRUE)
+fear = mean(fear_all, na.rm=TRUE)
+joy = mean(joy_all, na.rm=TRUE)
+sadness = mean(sadness_all, na.rm=TRUE)
+return(c(list(Sentiment=sentiment, Anger=anger, Disgust=disgust, Fear=fear, Joy=joy, Sadness=sadness))) 
+}
+
+
+
+
+
+
+
+tweet_wordcloud = function(word = 'Any Word'){
+capture.output(setup_twitter_oauth('hLICNBRakuFE1ifoePIix0Ser', 'r4ggFazBdjxiMYAORCYh9riTNi9hBBEsDj069NlX8YrmSHiTm8', access_token='844891915925540869-BvifTPLzkbLmXUlGtlV8LuYJgjSg6Ly', access_secret='X8ZuQBlIrwfirDsD7y3CcTnBpvUk9E7ZKXWq4iZJngt7C'), file='NUL')
+tweet <- searchTwitter(paste('#', as.character(word), sep = ''), 1000, lang="en")
+tweet <- strip_retweets(tweet, strip_manual=TRUE, strip_mt=TRUE) #remove retweets
+tweet <- twListToDF(tweet) #convert to data frame
+tweet <- tweet %>% select(text) #selects only text
+for (i in 1:length(tweet$text)){
+tweet[i,1] <- gsub('[[:cntrl:]]', '', tweet[i,1]) #remove control characters 
+tweet[i,1] <- gsub('\\d+', '', tweet[i,1]) #remove digits
+tweet[i,1] <- iconv(tweet[i,1], 'UTF-8', 'ASCII', sub="") #remove emojis 
+tweet[i,1] <- gsub("http[^[:space:]]*", "", tweet[i,1]) #remove URLs
+tweet[i,1] <- gsub("amp", "", tweet[i,1])
+tweet[i,1] <- gsub("@", "", tweet[i,1])
+tweet[i,1] <- gsub("#", "", tweet[i,1])
+tweet[i,1] <- gsub("$", "", tweet[i,1])
+tweet[i,1] <- gsub("-", "", tweet[i,1])
+tweet[i,1] <- gsub("/", "", tweet[i,1])
+tweet[i,1] <- gsub("=", "", tweet[i,1])
+tweet[i,1] <- gsub(":", "", tweet[i,1])}
+words = unnest_tokens(tweet, word, text, token='words')
+words_count <- suppressMessages(words %>% anti_join(stop_words) %>% dplyr::count(word, sort=TRUE))
+words_count %>% with(wordcloud(word, n, max.words = 25, random.order = FALSE, colors="red"))
+}
+
+
+
+
+
+
+
+
+#Here is how I created the bigrams:
+bigramsdep<-unnest_tokens(cleaned_text,bigram,text,token='ngrams',n=2)
+bigramsdep %>% dplyr::count(bigram,sort=TRUE)
+
+bigramsdep <- bigramsdep %>%separate(bigram, c("word1", "word2"), sep = " ") %>%filter(!word1 %in% stop_words$word) %>% filter(!word2 %in% stop_words$word) %>%filter(!word1 =="depression") %>% filter(!word2=="depression")%>%unite(bigram, word1, word2, sep = " ")
+
+bigramcountdep<- bigramsdep %>% dplyr::count(bigram,sort=TRUE)
+
+ 
+words_count %>% with(wordcloud(word, n, max.words = 100, random.order = FALSE, colors="red"))
+
+depsentiment <- words_count %>% inner_join(get_sentiments("bing"))
+
+head(depsentiment, 25) %>%mutate(n = ifelse(sentiment == "negative", -n, n)) %>%ggplot(aes(x = reorder(word, n), y = n, fill = sentiment)) +geom_bar(alpha = 0.8, stat = "identity") +coord_flip()
+
+
+
+
+tweetscontrol <- searchTwitter('a OR b OR c OR d OR e OR f OR g OR h OR i OR j OR k OR l OR m OR n OR o OR p OR q OR s OR t OR u OR v OR w OR x OR y OR z',lang='en', n=100)
+
+
+tweets = laply(tweets, function(t) t$getText())
+tweets = clean.text(tweets)
+head(tweets)
+
+
+
+```
+
